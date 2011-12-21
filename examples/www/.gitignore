@@ -1,5 +1,6 @@
 bem-bl
 pages/*/*.css
 pages/*/*.js
+!*.priv.js
 !pages/*/*.bemjson.js
 pages/*/*.html
