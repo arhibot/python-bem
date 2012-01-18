@@ -3,11 +3,13 @@ from glob import glob
 
 import PyV8
 
-from .import utils
+from . import utils
 
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
 JS_EXTENSION_NAME = 'bem/%(pagedir)s'
+
+BEMHTML_RENDER = 'BEMHTML.apply(%s)'
 
 
 class BEMRender(object):
@@ -54,7 +56,7 @@ class BEMRender(object):
     def render(self, pagedir, context, env, entrypoint):
         '''
         create bemjson and render it
-        
+
         context: python object
         env: python object
         entrypoint: name of js function
@@ -62,7 +64,10 @@ class BEMRender(object):
         BEMHTML.apply(entrypoint(context, env))
         '''
         with self.get_pyv8_context(pagedir) as ctx:
-            block = ctx.eval(entrypoint)
-            bemjson = block(context, env)
-            bem = ctx.eval('BEMHTML')
-            return bem.apply(bemjson)
+            ctx.locals.context = context
+            ctx.locals.env = env
+            if entrypoint:
+                ctx.locals.bemjson = ctx.eval('%s(context, env)' % entrypoint)
+            else:
+                ctx.locals.bemjson = context
+            return ctx.eval('BEMHTML.apply(bemjson)')

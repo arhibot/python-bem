@@ -33,7 +33,7 @@ class MainHandler(tornado.web.RequestHandler):
 if __name__ == "__main__":
     application = tornado.web.Application([
         (r"/", MainHandler),
-        (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(wwwpath, page)}),
+        (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(wwwpath, 'pages')}),
         (r"/blocks/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(wwwpath, 'blocks')}),
         (r"/bem-bl/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(wwwpath, 'bem-bl')}),
     ])

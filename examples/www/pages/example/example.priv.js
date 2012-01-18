@@ -3,10 +3,10 @@ render = function(data, env) {
         block: 'b-page',
         title: data['title']('Page title'),
         head: [
-            { elem: 'css', url: '/static/example.css'},
-            { elem: 'css', url: '/static/example.ie.css', ie: 'lt IE 8' },
+            { elem: 'css', url: '/static/example/example.css'},
+            { elem: 'css', url: '/static/example/example.ie.css', ie: 'lt IE 8' },
             { block: 'i-jquery', elem: 'core' },
-            { elem: 'js', url: '/static/example.js' }
+            { elem: 'js', url: '/static/example/example.js' }
         ],
         content: [
             {
