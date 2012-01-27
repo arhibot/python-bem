@@ -17,6 +17,14 @@ render = function(data, env) {
                 title: 'button',
                 content: data['text']
             },
+            {
+                block: 'b-link',
+                mods : { pseudo : 'yes', togcolor : 'yes', color: 'green' },
+                url: '#',
+                target: '_blank',
+                title: 'button',
+                content: 'Привет!'
+            },
         ]
     }
 }

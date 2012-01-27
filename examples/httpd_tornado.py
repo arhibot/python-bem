@@ -22,12 +22,12 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         # Create some dynamic context
         context = {'url' : 'http://example.com/',
-                   'text': 'This pseudo link changes its color after click',
+                   'text': 'Привет',
                    'title': lambda title: '(%s) %s' % (self.request.uri, title)}# (path. request.uri)}
         env = self.request
         # Render page example from pages
         # Calls BEMHTML.apply(render(context, env))
-        message = renderer.render('pages/example', context, env, "render")
+        message = renderer.render('pages/example', context, env, "render", False)
         self.write(message)
 
 if __name__ == "__main__":

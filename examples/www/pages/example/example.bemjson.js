@@ -2,10 +2,10 @@
     block: 'b-page',
     title: 'Pseudo link',
     head: [
-        { elem: 'css', url: 'example.css'},
-        { elem: 'css', url: 'example.ie.css', ie: 'lt IE 8' },
+        { elem: 'css', url: 'example/example.css'},
+        { elem: 'css', url: 'example/example.ie.css', ie: 'lt IE 8' },
         { block: 'i-jquery', elem: 'core' },
-        { elem: 'js', url: 'example.js' }
+        { elem: 'js', url: 'example/example.js' }
     ],
     content: [
         {

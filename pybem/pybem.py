@@ -29,7 +29,7 @@ class BEMRender(object):
                 path = os.path.join(abspagedir,
                                     fname)
                 try:
-                    jsdata.append(utils.smart_str(open(path).read()))
+                    jsdata.append(open(path).read())
                 except IOError, e:
                     print e
         return '\n'.join(jsdata)
@@ -48,12 +48,18 @@ class BEMRender(object):
         return name, exts
 
 
-    def get_pyv8_context(self, pagedir):
-        name, _exts = self.get_extensions(pagedir)
-        return PyV8.JSContext(extensions=[name])
+    def get_pyv8_context(self, pagedir, use_exts):
+        exts = []
+        prepare = ''
+        if use_exts:
+            name, _exts_objs = self.get_extensions(pagedir)
+            exts = [name]
+        else:
+            prepare = self.load_pagejs_data(pagedir)
+        return PyV8.JSContext(extensions=exts), prepare.decode('utf8')
 
 
-    def render(self, pagedir, context, env, entrypoint):
+    def render(self, pagedir, context, env, entrypoint, use_exts=False):
         '''
         create bemjson and render it
 
@@ -63,7 +69,11 @@ class BEMRender(object):
 
         BEMHTML.apply(entrypoint(context, env))
         '''
-        with self.get_pyv8_context(pagedir) as ctx:
+
+        ctx, prepare = self.get_pyv8_context(pagedir, use_exts)
+        with ctx:
+            if prepare:
+                ctx.eval(prepare)
             ctx.locals.context = context
             ctx.locals.env = env
             if entrypoint:
