@@ -6,6 +6,8 @@ import PyV8
 from . import utils
 
 
+RETURN_BEMJSON = 'RETURN_BEMJSON'
+
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
 JS_EXTENSION_NAME = 'bem/%(pagedir)s'
 
@@ -80,4 +82,6 @@ class BEMRender(object):
                 ctx.locals.bemjson = ctx.eval('%s(context, env)' % entrypoint)
             else:
                 ctx.locals.bemjson = context
+            if env.get(RETURN_BEMJSON, False):
+                return ctx.eval('JSON.stringify(bemjson)')
             return ctx.eval('BEMHTML.apply(bemjson)')
