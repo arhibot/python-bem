@@ -3,9 +3,6 @@ from glob import glob
 
 import PyV8
 
-from . import utils
-
-
 RETURN_BEMJSON = 'RETURN_BEMJSON'
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
