@@ -24,7 +24,7 @@ class MainHandler(tornado.web.RequestHandler):
         context = {'url' : 'http://example.com/',
                    'text': 'Привет',
                    'title': lambda title: '(%s) %s' % (self.request.uri, title)}# (path. request.uri)}
-        env = {pybem.RETURN_BEMJSON: False}
+        env = self.request
         # Render page example from pages
         # Calls BEMHTML.apply(render(context, env))
         message = renderer.render('pages/example', context, env, "render", False)

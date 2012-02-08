@@ -58,7 +58,7 @@ class BEMRender(object):
         return PyV8.JSContext(extensions=exts), prepare.decode('utf8')
 
 
-    def render(self, pagedir, context, env, entrypoint, use_exts=False):
+    def render(self, pagedir, context, env, entrypoint, use_exts=False, return_bemjson=False):
         '''
         create bemjson and render it
 
@@ -79,6 +79,6 @@ class BEMRender(object):
                 ctx.locals.bemjson = ctx.eval('%s(context, env)' % entrypoint)
             else:
                 ctx.locals.bemjson = context
-            if env.get(RETURN_BEMJSON, False):
+            if return_bemjson:
                 return ctx.eval('JSON.stringify(bemjson)')
             return ctx.eval('BEMHTML.apply(bemjson)')
