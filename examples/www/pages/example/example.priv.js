@@ -15,7 +15,7 @@ render = function(data, env) {
                 url: '#',
                 target: '_blank',
                 title: 'button',
-                content: data['text']
+                content: pprint(data)
             },
             {
                 block: 'b-link',

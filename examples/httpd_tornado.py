@@ -15,7 +15,7 @@ from pybem import pybem
 wwwpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        'www')
 # Create BEM renderer
-renderer = pybem.BEMRender(wwwpath)
+renderer = pybem.BEMRender(wwwpath, toplevelcls=pybem.TopLevelUtils)
 
 
 class MainHandler(tornado.web.RequestHandler):

@@ -1,9 +1,8 @@
 import os
 from glob import glob
+from pprint import pformat
 
 import PyV8
-
-RETURN_BEMJSON = 'RETURN_BEMJSON'
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
 JS_EXTENSION_NAME = 'bem/%(pagedir)s'
@@ -11,12 +10,21 @@ JS_EXTENSION_NAME = 'bem/%(pagedir)s'
 BEMHTML_RENDER = 'BEMHTML.apply(%s)'
 
 
+class TopLevelUtils(PyV8.JSClass):
+    def pprint(self, value, to_term=True):
+        s = pformat(value)
+        if to_term:
+            print s
+        return s
+
+
 class BEMRender(object):
-    def __init__(self, rootpath, js_load=None):
+    def __init__(self, rootpath, js_load=None, toplevelcls=None):
         self.rootpath = rootpath
         self.contexts = {}
         self.techs = js_load or DEFAULT_JS_LOAD
         self.pageextensions = {}
+        self.toplevelcls = toplevelcls
 
 
     def load_pagejs_data(self, pagedir):
@@ -55,7 +63,8 @@ class BEMRender(object):
             exts = [name]
         else:
             prepare = self.load_pagejs_data(pagedir)
-        return PyV8.JSContext(extensions=exts), prepare.decode('utf8')
+        return PyV8.JSContext(self.toplevelcls(),
+                              extensions=exts), prepare.decode('utf8')
 
 
     def render(self, pagedir, context, env, entrypoint, use_exts=False, return_bemjson=False):
