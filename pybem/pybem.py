@@ -1,11 +1,12 @@
 import os
 from glob import glob
 from pprint import pformat
+from itertools import chain
 
 import PyV8
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
-JS_EXTENSION_NAME = 'bem/%(pagedir)s'
+JS_EXTENSION_NAME = 'bem/%(pagedir)s/_extra_:%(suffix)s'
 
 BEMHTML_RENDER = 'BEMHTML.apply(%s)'
 
@@ -27,11 +28,11 @@ class BEMRender(object):
         self.toplevelcls = toplevelcls
 
 
-    def load_pagejs_data(self, pagedir):
+    def load_pagejs_data(self, pagedir, extra_files):
         jsdata = []
         abspagedir = os.path.join(self.rootpath,
                                   pagedir)
-        for tech in self.techs:
+        for tech in chain(extra_files, self.techs):
             for fname in glob(os.path.join(abspagedir, tech)):
                 path = os.path.join(abspagedir,
                                     fname)
@@ -42,32 +43,37 @@ class BEMRender(object):
         return '\n'.join(jsdata)
 
 
-    def get_extensions(self, pagedir):
+    def get_extensions(self, pagedir, extra_files):
         '''
         pagedir: 'pages-touch/index'
         '''
-        exts = self.pageextensions.get(pagedir)
-        name = JS_EXTENSION_NAME % {'pagedir': pagedir}
-        if exts is None:
-            page_js = self.load_pagejs_data(pagedir)
-            exts = [PyV8.JSExtension(name, page_js)]
-            self.pageextensions[pagedir] = exts
-        return name, exts
+        suffix = '_'.join(extra_files)
+        name = JS_EXTENSION_NAME % {'pagedir': pagedir,
+                                    'suffix': suffix}
+        ext = self.pageextensions.get(name)
+
+        if ext is None:
+            page_js = self.load_pagejs_data(pagedir, extra_files)
+            ext = PyV8.JSExtension(name, page_js)
+            self.pageextensions[name] = ext
+        return name, ext
 
 
-    def get_pyv8_context(self, pagedir, use_exts):
+    def get_pyv8_context(self, pagedir, use_exts, extra_files):
         exts = []
         prepare = ''
         if use_exts:
-            name, _exts_objs = self.get_extensions(pagedir)
+            name, _exts_objs = self.get_extensions(pagedir, extra_files)
             exts = [name]
         else:
-            prepare = self.load_pagejs_data(pagedir)
+            prepare = self.load_pagejs_data(pagedir, extra_files)
         return PyV8.JSContext(self.toplevelcls(),
                               extensions=exts), prepare.decode('utf8')
 
 
-    def render(self, pagedir, context, env, entrypoint, use_exts=False, return_bemjson=False):
+    def render(self, pagedir, context, env, entrypoint,
+               use_exts=False, return_bemjson=False,
+               extra_files=None):
         '''
         create bemjson and render it
 
@@ -78,7 +84,7 @@ class BEMRender(object):
         BEMHTML.apply(entrypoint(context, env))
         '''
 
-        ctx, prepare = self.get_pyv8_context(pagedir, use_exts)
+        ctx, prepare = self.get_pyv8_context(pagedir, use_exts, extra_files or [])
         with ctx:
             if prepare:
                 ctx.eval(prepare)

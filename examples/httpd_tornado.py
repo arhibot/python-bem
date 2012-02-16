@@ -27,7 +27,8 @@ class MainHandler(tornado.web.RequestHandler):
         env = self.request
         # Render page example from pages
         # Calls BEMHTML.apply(render(context, env))
-        message = renderer.render('pages/example', context, env, "render", False)
+        message = renderer.render('pages/example', context, env, "render", False,
+                                  extra_files=['example.en.js'])
         self.write(message)
 
 if __name__ == "__main__":

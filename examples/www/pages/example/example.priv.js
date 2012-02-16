@@ -1,7 +1,7 @@
 render = function(data, env) {
     return {
         block: 'b-page',
-        title: data['title']('Page title'),
+        title: data['title']('Page title') + '|' + i18n['page.name'],
         head: [
             { elem: 'css', url: '/static/example/example.css'},
             { elem: 'css', url: '/static/example/example.ie.css', ie: 'lt IE 8' },
