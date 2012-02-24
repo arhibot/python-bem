@@ -15,7 +15,7 @@ from pybem import pybem
 wwwpath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        'www')
 # Create BEM renderer
-renderer = pybem.BEMRender(wwwpath, toplevelcls=pybem.TopLevelUtils)
+renderer = pybem.BEMRender(wwwpath, cache_context=True, use_exts=False)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -27,7 +27,7 @@ class MainHandler(tornado.web.RequestHandler):
         env = self.request
         # Render page example from pages
         # Calls BEMHTML.apply(render(context, env))
-        message = renderer.render('pages/example', context, env, "render", False,
+        message = renderer.render('pages/example', context, env, "render",
                                   extra_files=['example.en.js'])
         self.write(message)
 

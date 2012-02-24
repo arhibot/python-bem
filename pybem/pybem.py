@@ -20,11 +20,21 @@ class TopLevelUtils(PyV8.JSClass):
 
 
 class BEMRender(object):
-    def __init__(self, rootpath, js_load=None, toplevelcls=None):
+    def __init__(self,
+                 rootpath,
+                 js_load=None,
+                 toplevelcls=TopLevelUtils,
+                 use_exts=False,
+                 cache_context=False):
         self.rootpath = rootpath
-        self.contexts = {}
         self.techs = js_load or DEFAULT_JS_LOAD
+
+        self.use_exts = use_exts
         self.pageextensions = {}
+
+        self.cache_context = cache_context
+        self.contexts = {}
+
         self.toplevelcls = toplevelcls
 
 
@@ -38,8 +48,8 @@ class BEMRender(object):
                                     fname)
                 try:
                     jsdata.append(open(path).read())
-                except IOError, e:
-                    print e
+                except IOError:
+                    pass
         return '\n'.join(jsdata)
 
 
@@ -47,7 +57,7 @@ class BEMRender(object):
         '''
         pagedir: 'pages-touch/index'
         '''
-        suffix = '_'.join(extra_files)
+        suffix = '/'.join(extra_files)
         name = JS_EXTENSION_NAME % {'pagedir': pagedir,
                                     'suffix': suffix}
         ext = self.pageextensions.get(name)
@@ -59,20 +69,31 @@ class BEMRender(object):
         return name, ext
 
 
-    def get_pyv8_context(self, pagedir, use_exts, extra_files):
+    def get_pyv8_context(self, pagedir, extra_files):
+        if self.cache_context:
+            context_name = pagedir + '/'.join(extra_files)
+            context = self.contexts.get(context_name)
+            if context:
+                return context, ''
+
         exts = []
         prepare = ''
-        if use_exts:
+        if self.use_exts:
             name, _exts_objs = self.get_extensions(pagedir, extra_files)
             exts = [name]
         else:
             prepare = self.load_pagejs_data(pagedir, extra_files)
-        return PyV8.JSContext(self.toplevelcls(),
-                              extensions=exts), prepare.decode('utf8')
+        context = PyV8.JSContext(self.toplevelcls(),
+                                 extensions=exts)
+
+        if self.cache_context:
+            self.contexts[context_name] = context
+
+        return context, prepare.decode('utf8')
 
 
     def render(self, pagedir, context, env, entrypoint,
-               use_exts=False, return_bemjson=False,
+               return_bemjson=False,
                extra_files=None):
         '''
         create bemjson and render it
@@ -84,7 +105,7 @@ class BEMRender(object):
         BEMHTML.apply(entrypoint(context, env))
         '''
 
-        ctx, prepare = self.get_pyv8_context(pagedir, use_exts, extra_files or [])
+        ctx, prepare = self.get_pyv8_context(pagedir, extra_files or [])
         with ctx:
             if prepare:
                 ctx.eval(prepare)
