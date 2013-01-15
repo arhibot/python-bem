@@ -6,6 +6,7 @@ from pprint import pformat
 from itertools import chain
 
 import PyV8
+import subprocess
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
 JS_EXTENSION_NAME = 'bem/%(pagedir)s/_extra_:%(suffix)s'
@@ -27,7 +28,8 @@ class BEMRender(object):
                  js_load=None,
                  toplevelcls=TopLevelUtils,
                  use_exts=False,
-                 cache_context=False):
+                 cache_context=False,
+                 auto_rebuild=False):
         self.rootpath = rootpath
         self.techs = js_load or DEFAULT_JS_LOAD
 
@@ -37,8 +39,15 @@ class BEMRender(object):
         self.cache_context = cache_context
         self.contexts = {}
 
+        self.auto_rebuild = auto_rebuild
+
         self.toplevelcls = toplevelcls
 
+    def rebuild(self, path):
+        if path.endswith('.priv.js'):
+            relname = os.path.relpath(path, self.rootpath)
+            subprocess.call(['./node_modules/.bin/bem', 'make', relname], cwd=self.rootpath)
+            print 'end rebuild ' + relname
 
     def load_pagejs_data(self, pagedir, extra_files):
         jsdata = []
@@ -49,6 +58,8 @@ class BEMRender(object):
                 path = os.path.join(abspagedir,
                                     fname)
                 try:
+                    if self.auto_rebuild:
+                        self.rebuild(path)
                     jsdata.append(open(path).read())
                 except IOError:
                     pass
@@ -106,7 +117,6 @@ class BEMRender(object):
 
         BEMHTML.apply(entrypoint(context, env))
         '''
-
         ctx, prepare = self.get_pyv8_context(pagedir, extra_files or [])
         with ctx:
             if prepare:
@@ -120,3 +130,4 @@ class BEMRender(object):
             if return_bemjson:
                 return ctx.eval('JSON.stringify(bemjson)')
             return ctx.eval('BEMHTML.apply(bemjson)')
+
