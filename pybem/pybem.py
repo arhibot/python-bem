@@ -124,10 +124,12 @@ class BEMRender(object):
             ctx.locals.context = context
             ctx.locals.env = env
             if entrypoint:
-                ctx.locals.bemjson = ctx.eval('%s(context, env)' % entrypoint)
+                if return_bemjson:
+                    return ctx.eval('JSON.stringify(%s(context, env))' % entrypoint)
+                return ctx.eval('BEMHTML.apply(%s(context, env))' % entrypoint)
             else:
                 ctx.locals.bemjson = context
-            if return_bemjson:
-                return ctx.eval('JSON.stringify(bemjson)')
-            return ctx.eval('BEMHTML.apply(bemjson)')
+                if return_bemjson:
+                    return ctx.eval('JSON.stringify(bemjson)')
+                return ctx.eval('BEMHTML.apply(bemjson)')
 
