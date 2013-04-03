@@ -29,7 +29,8 @@ class BEMRender(object):
                  toplevelcls=TopLevelUtils,
                  use_exts=False,
                  cache_context=False,
-                 auto_rebuild=False):
+                 auto_rebuild=False,
+                 call_gc=True):
         self.rootpath = rootpath
         self.techs = js_load or DEFAULT_JS_LOAD
 
@@ -42,6 +43,8 @@ class BEMRender(object):
         self.auto_rebuild = auto_rebuild
 
         self.toplevelcls = toplevelcls
+
+        self.call_gc = call_gc
 
     def rebuild(self, path):
         if path.endswith('.priv.js'):
@@ -127,13 +130,22 @@ class BEMRender(object):
             ctx.locals.env = env
             if entrypoint:
                 if return_bemjson:
-                    return ctx.eval('JSON.stringify(%s(context, env))' % entrypoint)
-                return ctx.eval('BEMHTML.apply(%s(context, env))' % entrypoint)
+                    result = ctx.eval('JSON.stringify(%s(context, env))' % entrypoint)
+                else:
+                    result = ctx.eval('BEMHTML.apply(%s(context, env))' % entrypoint)
             else:
                 ctx.locals.bemjson = context
                 if return_bemjson:
-                    return ctx.eval('JSON.stringify(bemjson)')
-                return ctx.eval('BEMHTML.apply(bemjson)')
+                    result = ctx.eval('JSON.stringify(bemjson)')
+                else:
+                    result = ctx.eval('BEMHTML.apply(bemjson)')
+
+            # call GC explicitly for resolving strange segfalts with third-party libs
+            # see: http://code.google.com/p/pyv8/issues/detail?id=105
+            if self.call_gc:
+                PyV8.JSEngine.collect()
+
+            return result
 
 
 import re
