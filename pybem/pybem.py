@@ -7,6 +7,8 @@ from itertools import chain
 
 import PyV8
 import subprocess
+import threading
+
 
 DEFAULT_JS_LOAD = ['*.bemhtml.js', '*.priv.js']
 JS_EXTENSION_NAME = 'bem/%(pagedir)s/_extra_:%(suffix)s'
@@ -38,7 +40,7 @@ class BEMRender(object):
         self.pageextensions = {}
 
         self.cache_context = cache_context
-        self.contexts = {}
+        self.contexts = threading.local()
 
         self.auto_rebuild = auto_rebuild
 
@@ -90,7 +92,7 @@ class BEMRender(object):
     def get_pyv8_context(self, pagedir, extra_files):
         if self.cache_context:
             context_name = pagedir + '/'.join(extra_files)
-            context = self.contexts.get(context_name)
+            context = self.contexts.__dict__.get(context_name)
             if context:
                 return context, ''
 
@@ -105,7 +107,7 @@ class BEMRender(object):
                                  extensions=exts)
 
         if self.cache_context:
-            self.contexts[context_name] = context
+            self.contexts.__dict__[context_name] = context
 
         return context, prepare
 
@@ -122,30 +124,31 @@ class BEMRender(object):
 
         BEMHTML.apply(entrypoint(context, env))
         '''
-        ctx, prepare = self.get_pyv8_context(pagedir, extra_files or [])
-        with ctx:
-            if prepare:
-                ctx.eval(prepare)
-            ctx.locals.context = context
-            ctx.locals.env = env
-            if entrypoint:
-                if return_bemjson:
-                    result = ctx.eval('JSON.stringify(%s(context, env))' % entrypoint)
+        with PyV8.JSLocker():
+            ctx, prepare = self.get_pyv8_context(pagedir, extra_files or [])
+            with ctx:
+                if prepare:
+                    ctx.eval(prepare)
+                ctx.locals.context = context
+                ctx.locals.env = env
+                if entrypoint:
+                    if return_bemjson:
+                        result = ctx.eval('JSON.stringify(%s(context, env))' % entrypoint)
+                    else:
+                        result = ctx.eval('BEMHTML.apply(%s(context, env))' % entrypoint)
                 else:
-                    result = ctx.eval('BEMHTML.apply(%s(context, env))' % entrypoint)
-            else:
-                ctx.locals.bemjson = context
-                if return_bemjson:
-                    result = ctx.eval('JSON.stringify(bemjson)')
-                else:
-                    result = ctx.eval('BEMHTML.apply(bemjson)')
+                    ctx.locals.bemjson = context
+                    if return_bemjson:
+                        result = ctx.eval('JSON.stringify(bemjson)')
+                    else:
+                        result = ctx.eval('BEMHTML.apply(bemjson)')
 
-            # call GC explicitly for resolving strange segfalts with third-party libs
-            # see: http://code.google.com/p/pyv8/issues/detail?id=105
-            if self.call_gc:
-                PyV8.JSEngine.collect()
+                # call GC explicitly for resolving strange segfalts with third-party libs
+                # see: http://code.google.com/p/pyv8/issues/detail?id=105
+                if self.call_gc:
+                    PyV8.JSEngine.collect()
 
-            return result
+        return result
 
 
 import re
